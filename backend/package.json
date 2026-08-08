@@ -1,0 +1,27 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Activity tracker",
+  "keywords": [
+    "nothing"
+  ],
+  "homepage": "https://github.com/hamsaraj875-del/BX_Member_Activity_Tracker#readme",
+  "bugs": {
+    "url": "https://github.com/hamsaraj875-del/BX_Member_Activity_Tracker/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hamsaraj875-del/BX_Member_Activity_Tracker.git"
+  },
+  "license": "ISC",
+  "author": "Hamsaraj",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "node": "^26.7.0"
+  }
+}
