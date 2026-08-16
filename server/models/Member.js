@@ -90,18 +90,17 @@ const MemberSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      required: true,
-      enum: ["CSE", "IT", "ECE", "ME"],
+      enum: ["CSE", "IT", "ECE", "ME", ""],
+      default: "",
     },
     year: {
       type: String,
-      required: true,
-      enum: ["1st Year", "2nd Year", "3rd Year", "4th Year"],
+      enum: ["1st Year", "2nd Year", "3rd Year", "4th Year", ""],
+      default: "",
     },
     role: {
       type: String,
-      required: true,
-      enum: ["Member", "Lead", "Mentor"],
+      enum: ["Member", "Lead", "Mentor", ""],
       default: "Member",
     },
     status: {

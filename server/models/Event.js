@@ -30,6 +30,10 @@ const EventSchema = new mongoose.Schema(
       max: 100,
       default: 10,
     },
+    locked: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

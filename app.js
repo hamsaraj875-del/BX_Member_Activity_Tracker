@@ -3,6 +3,7 @@
 
 let members = [];
 let events = [];
+let isOfflineMode = false;
 
 // ── API Helper ────────────────────────────────────────────────────────────────
 // Centralised fetch wrapper with JSON support and basic error handling.
@@ -35,7 +36,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Graceful fallback to bundled seed data if API is unreachable
     members = typeof DEFAULT_MEMBERS !== "undefined" ? DEFAULT_MEMBERS : [];
     events = typeof DEFAULT_EVENTS !== "undefined" ? DEFAULT_EVENTS : [];
-    console.warn("Using built-in seed data as fallback.");
+    isOfflineMode = true;
+    console.warn("Using built-in seed data as fallback (Offline Mode).");
   }
 
   // Populate UI views
@@ -483,7 +485,14 @@ function renderMembersTable(dataList) {
         </div>
       </td>
       <td class="align-right">
-        <button class="btn btn-secondary btn-sm" onclick="viewMemberProfile('${member.id}')">View Details</button>
+        <div class="flex-row gap-sm justify-end">
+          <button class="btn btn-secondary btn-sm" onclick="viewMemberProfile('${member.id}')">View Details</button>
+          <button class="btn btn-secondary btn-sm" style="color: var(--color-danger); border-color: var(--color-danger);" onclick="deleteMember('${member.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -567,16 +576,44 @@ async function handleRegisterMember(e) {
   };
 
   try {
-    // POST to MongoDB via API
-    const created = await apiCall("/api/members", { method: "POST", body: newMember });
+    let created;
+    if (isOfflineMode) {
+      created = {
+        ...newMember,
+        id: "mem-" + Date.now(),
+        status: newMember.status || "Active",
+        attendance: [],
+        metrics: {
+          github: { commits: 0, repos: 0, languages: [] },
+          leetcode: { solved: 0, rating: 0 }
+        }
+      };
+    } else {
+      created = await apiCall("/api/members", { method: "POST", body: newMember });
+    }
     members.push(created); // update local cache
 
     document.getElementById("form-register-member").reset();
     closeModal("modal-register");
     applyFilters();
-    alert(`${name} has been registered successfully!`);
+    alert(`${name} has been registered successfully!\n\nInitial Stats Fetched:\n- GitHub Commits: ${created.metrics.github.commits}\n- LeetCode Solved: ${created.metrics.leetcode.solved}`);
   } catch (err) {
     alert(`Registration failed: ${err.message}`);
+  }
+}
+
+async function deleteMember(memberId) {
+  if (!confirm("Are you sure you want to permanently delete this member?")) return;
+  
+  try {
+    if (!isOfflineMode) {
+      await apiCall(`/api/members/${memberId}?hard=true`, { method: "DELETE" });
+    }
+    members = members.filter(m => m.id !== memberId);
+    applyFilters();
+    alert("Member deleted successfully.");
+  } catch (err) {
+    alert(`Failed to delete member: ${err.message}`);
   }
 }
 
@@ -587,11 +624,19 @@ async function handleCreateEvent(e) {
   const date = document.getElementById("evt-date-input").value;
   const type = document.getElementById("evt-type-select").value;
   const points = parseInt(document.getElementById("evt-points-input").value, 10);
+  const newEvent = { title, date, type, points };
 
   try {
-    // POST new event to MongoDB via API
-    const created = await apiCall("/api/events", { method: "POST", body: { title, date, type, points } });
-    events.push(created); // update local cache
+    let createdEvent;
+    if (isOfflineMode) {
+      createdEvent = {
+        ...newEvent,
+        id: "evt-" + Date.now()
+      };
+    } else {
+      createdEvent = await apiCall("/api/events", { method: "POST", body: newEvent });
+    }
+    events.push(createdEvent);
 
     document.getElementById("form-create-event").reset();
     closeModal("modal-add-event");
@@ -649,6 +694,16 @@ function loadAttendanceSheet() {
   if (!tbody) return;
   tbody.innerHTML = "";
 
+  const isLocked = activeEvent.locked;
+  const lockBtnText = document.getElementById("lock-btn-text");
+  if (lockBtnText) {
+    lockBtnText.textContent = isLocked ? "Unlock" : "Lock";
+  }
+  const saveBtn = document.getElementById("btn-save-attendance");
+  if (saveBtn) {
+    saveBtn.disabled = isLocked;
+  }
+
   members.forEach(m => {
     const isPresent = m.attendance.includes(eventId);
     const tr = document.createElement("tr");
@@ -658,15 +713,15 @@ function loadAttendanceSheet() {
     tr.innerHTML = `
       <td>
         <label class="checkbox-container">
-          <input type="checkbox" class="attendance-check-input" data-member-id="${m.id}" ${isPresent ? "checked" : ""}>
+          <input type="checkbox" class="attendance-check-input" data-member-id="${m.id}" ${isPresent ? "checked" : ""} ${isLocked ? "disabled" : ""}>
           <span class="checkmark"></span>
         </label>
       </td>
       <td><span class="member-cell-name">${m.name}</span></td>
-      <td><span>${m.department} • ${m.year}</span></td>
+      <td><span>${m.department || 'N/A'} • ${m.year || 'N/A'}</span></td>
       <td>
         <span class="metric-badge ${m.attendance.length > 3 ? 'green-badge' : 'grey-badge'}">
-          ${m.attendance.length} / ${events.length} Attended
+          ${m.attendance.length} Days Attended
         </span>
       </td>
       <td>
@@ -719,18 +774,62 @@ async function saveAttendanceSheet() {
 
   // Send PATCH requests to API for changed members
   try {
-    await Promise.all(
-      updates.map(({ memberId, present }) =>
-        apiCall(`/api/members/${memberId}/attendance`, {
-          method: "PATCH",
-          body: { eventId, present },
-        })
-      )
-    );
+    if (!isOfflineMode) {
+      await Promise.all(
+        updates.map(({ memberId, present }) =>
+          apiCall(`/api/members/${memberId}/attendance`, {
+            method: "PATCH",
+            body: { eventId, present },
+          })
+        )
+      );
+    } else {
+      updates.forEach(({ memberId, present }) => {
+        const m = members.find(m => m.id === memberId);
+        if (m) {
+          if (present && !m.attendance.includes(eventId)) {
+            m.attendance.push(eventId);
+          } else if (!present) {
+            m.attendance = m.attendance.filter(eId => eId !== eventId);
+          }
+        }
+      });
+    }
     loadAttendanceSheet();
     alert("Attendance checklist saved and streaks updated successfully!");
   } catch (err) {
     alert(`Failed to save attendance: ${err.message}`);
+  }
+}
+
+async function toggleLockAttendance() {
+  const select = document.getElementById("attendance-event-select");
+  if (!select) return;
+  const eventId = select.value;
+
+  try {
+    let lockedState;
+    if (!isOfflineMode) {
+      const updatedEvent = await apiCall(`/api/events/${eventId}/lock`, { method: "PATCH" });
+      lockedState = updatedEvent.locked;
+    } else {
+      const e = events.find(e => e.id === eventId);
+      if (e) {
+        e.locked = !e.locked;
+        lockedState = e.locked;
+      }
+    }
+    
+    // Update local cache
+    const eventIndex = events.findIndex(e => e.id === eventId);
+    if (eventIndex !== -1) {
+      events[eventIndex].locked = lockedState;
+    }
+    
+    loadAttendanceSheet();
+    alert(`Attendance for this date is now ${lockedState ? 'LOCKED' : 'UNLOCKED'}.`);
+  } catch (err) {
+    alert(`Failed to toggle lock: ${err.message}`);
   }
 }
 

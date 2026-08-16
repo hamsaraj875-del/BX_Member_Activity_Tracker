@@ -103,6 +103,8 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+const Event = require("../models/Event");
+
 // ── PATCH /api/members/:id/attendance ────────────────────────────────────────
 // Adds or removes a single event from a member's attendance array
 // Body: { eventId: "evt-3", present: true | false }
@@ -110,6 +112,11 @@ router.patch("/:id/attendance", async (req, res) => {
   try {
     const { eventId, present } = req.body;
     if (!eventId) return res.status(400).json({ error: "eventId is required" });
+
+    const event = await Event.findOne({ eventId });
+    if (event && event.locked) {
+      return res.status(403).json({ error: "This event's attendance is locked." });
+    }
 
     const member = await Member.findOne({ memberId: req.params.id });
     if (!member) return res.status(404).json({ error: "Member not found" });

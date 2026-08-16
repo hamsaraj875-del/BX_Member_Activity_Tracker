@@ -83,6 +83,23 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// ── PATCH /api/events/:id/lock ────────────────────────────────────────────────
+router.patch("/:id/lock", async (req, res) => {
+  try {
+    const event = await Event.findOne({ eventId: req.params.id });
+    if (!event) return res.status(404).json({ error: "Event not found" });
+    
+    // Toggle the locked status
+    event.locked = !event.locked;
+    await event.save();
+    
+    res.json(transformEvent(event.toObject()));
+  } catch (err) {
+    console.error(`PATCH /api/events/${req.params.id}/lock error:`, err);
+    res.status(500).json({ error: "Failed to toggle lock on event" });
+  }
+});
+
 // ── Helper ────────────────────────────────────────────────────────────────────
 function transformEvent(doc) {
   const obj = { ...doc };
