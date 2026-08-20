@@ -19,7 +19,12 @@ const PORT = process.env.PORT || 3001;
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/bx_analytics";
 
 // ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors());
+// Allow requests from any origin (required for deployment on separate domains)
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -54,25 +59,31 @@ app.get("*", (req, res) => {
 
 // ── MongoDB Connection + Start ────────────────────────────────────────────────
 async function startServer() {
+  // Start server first so health check always responds
+  app.listen(PORT, () => {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log(`🚀 BX Analytics Server running at:`);
+    console.log(`   http://localhost:${PORT}`);
+    console.log(`   API:    http://localhost:${PORT}/api`);
+    console.log(`   Health: http://localhost:${PORT}/api/health`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  });
+
   try {
-    console.log("🔗 Connecting to MongoDB:", MONGO_URI);
+    console.log("🔗 Connecting to MongoDB:", MONGO_URI.replace(/\/\/.*@/, "//<credentials>@"));
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000, // fail fast if MongoDB isn't available
+      serverSelectionTimeoutMS: 8000,
     });
     console.log("✅ MongoDB connected successfully");
-
-    app.listen(PORT, () => {
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log(`🚀 BX Analytics Server running at:`);
-      console.log(`   http://localhost:${PORT}`);
-      console.log(`   API:    http://localhost:${PORT}/api`);
-      console.log(`   Health: http://localhost:${PORT}/api/health`);
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    });
+    console.log("   Run 'npm run seed' once to populate the database.");
   } catch (err) {
     console.error("❌ Failed to connect to MongoDB:", err.message);
-    console.error("\n💡 Make sure MongoDB is running locally, or update MONGODB_URI in server/.env");
-    process.exit(1);
+    console.error("\n💡 Fix: Update MONGODB_URI in server/.env");
+    console.error("   → For Atlas: copy the connection string from your cluster's Connect page");
+    console.error("   → Replace <cluster> in the URI with your actual cluster hostname");
+    console.error("   → Also run: npm run seed   (after fixing the URI)\n");
+    // Don't exit — let the server run in degraded mode
+    // The frontend will fall back to local seed data automatically
   }
 }
 

@@ -7,7 +7,10 @@ let isOfflineMode = false;
 
 // ── API Helper ────────────────────────────────────────────────────────────────
 // Centralised fetch wrapper with JSON support and basic error handling.
-async function apiCall(url, options = {}) {
+// API_BASE_URL is set in config.js — empty string means same-origin (default).
+async function apiCall(path, options = {}) {
+  const base = (window.API_BASE_URL || "").replace(/\/$/, "");
+  const url = base + path;
   const defaults = {
     headers: { "Content-Type": "application/json" },
   };
@@ -643,7 +646,7 @@ async function handleCreateEvent(e) {
 
     populateEventDropdown();
     // Auto-select the newly created event in the dropdown
-    document.getElementById("attendance-event-select").value = created.id;
+    document.getElementById("attendance-event-select").value = createdEvent.id;
     loadAttendanceSheet();
 
     alert(`Event "${title}" has been created!`);
