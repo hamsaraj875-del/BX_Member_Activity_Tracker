@@ -1,13 +1,14 @@
 /**
  * config.js — BX Analytics Frontend Configuration
  *
- * If your frontend and backend are on the SAME server (default),
- * leave API_BASE_URL as "" — relative URLs like /api/members will work.
- *
- * If your backend is deployed on a DIFFERENT domain/port (e.g. teammate's server),
- * set API_BASE_URL to the full backend URL, e.g.:
- *   window.API_BASE_URL = "https://bx-backend.onrender.com";
- *   window.API_BASE_URL = "http://localhost:3001";
+ * Automatically resolves the API Base URL:
+ * - If running locally (localhost, 127.0.0.1, or file:///), points to http://localhost:3001.
+ * - If deployed, uses relative paths to request data from the same host.
  */
 
-window.API_BASE_URL = "";   // ← Change this if backend is on a different domain
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:") {
+  window.API_BASE_URL = "http://localhost:3001";
+} else {
+  window.API_BASE_URL = ""; // Relative URL for deployment
+}
+
