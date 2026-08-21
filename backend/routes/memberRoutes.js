@@ -1,24 +1,18 @@
-import express from 'express';
-import {
-  getMembers,
-  getMemberById,
-  updateMemberProfile,
-  syncMember,
-  syncAllMembers,
-  deleteMember,
-} from '../controllers/memberController.js';
-import { protect } from '../middleware/authMiddleware.js';
-import { authorize } from '../middleware/roleMiddleware.js';
-
+const express = require('express');
+const Member = require('../models/Member');
+router.post('/', createMember);
 const router = express.Router();
 
-router.use(protect);
+router.post('/', async (req,res) => {
+  try {
+    const member = await Member.create(req.body);
+    res.status(201).json(member);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
 
-router.get('/', getMembers);
-router.get('/:id', getMemberById);
-router.put('/:id', updateMemberProfile);
-router.post('/:id/sync', syncMember);
-router.post('/sync-all', authorize('superadmin'), syncAllMembers);
-router.delete('/:id', authorize('superadmin'), deleteMember);
+router.get('/', async (req,res) => {
+  const members = await Member.find().sort({createdAt: -1});
+  res.json(members);
+});
 
-export default router;
+module.exports = router;

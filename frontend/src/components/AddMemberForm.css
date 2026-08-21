@@ -1,0 +1,101 @@
+.members-container { padding: 20px; background: #0d1117; min-height: 100vh; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header h1 { color: #fff; font-size: 24px; }
+.btn-add { background: #00bfff; color: #000; padding: 10px 18px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.members-table { width: 100%; background: #111827; border-radius: 12px; border: 1px solid #1f2937; }
+.table-header,.table-row { display: grid; grid-template-columns: 200px 150px 80px 160px 1fr; padding: 14px 20px; gap: 16px; align-items: center; }
+.table-header { background: #1f2937; font-size: 11px; font-weight: 700; color: #9ca3af; letter-spacing: 1px; text-transform: uppercase; }
+.table-row { border-top: 1px solid #1f2937; color: #d1d5db; font-size: 14px; }
+.table-row:hover { background: #1f2937; }
+.table-row.col.name { color: #fff; font-weight: 600; }
+.table-row.col.position { color: #00bfff; font-weight: 700; }
+.table-row.col.socials { display: flex; gap: 14px; flex-wrap: wrap; }
+.table-row.col.socials a { color: #00bfff; text-decoration: none; font-size: 13px; }
+.no-data { padding: 20px; text-align: center; color: #6b7280; }
+
+/* Modal CSS */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-card { background: #111827; padding: 30px; border-radius: 16px; width: 90%; max-width: 600px; border: 1px solid #1f2937; }
+.modal-card h2 { margin: 0; color: #fff; }
+.form-group { display: flex; flex-direction: column; margin-bottom: 16px; }
+.form-group label { font-size: 13px; color: #d1d5db; margin-bottom: 6px; font-weight: 600; }
+.form-group input { padding: 12px; border-radius: 8px; border: 1px solid #374151; background: #1f2937; color: #fff; }
+.form-row { display: flex; gap: 12px; }
+.social-row { display: grid; grid-template-columns: 120px 120px 1fr 40px; gap: 8px; margin-bottom: 8px; }
+.social-row button { background: #ef4444; border: none; color: white; border-radius: 6px; cursor: pointer; }
+.btn-add-social { background: transparent; border: 1px dashed #00bfff; color: #00bfff; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; }
+.btn-group { display: flex; gap: 10px; margin-top: 20px; }
+.btn-save { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #00bfff; color: #000; font-weight: 700; cursor: pointer; }
+.btn-cancel { flex: 1; padding: 12px; border: 1px solid #374151; border-radius: 8px; background: transparent; color: #fff; font-weight: 600; cursor: pointer; }
+.social-tag {
+  background: #1e293b; padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; color: #38bdf8; border: 1px solid #334155;
+}
+/* BACKDROP */
+.modal-overlay { 
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center; z-index: 1000; 
+}
+
+/* CARD */
+.modal-card { 
+  background: linear-gradient(145deg, #1e293b, #0f172a); 
+  padding: 32px; border-radius: 20px; width: 90%; max-width: 550px; 
+  border: 1px solid #334155; box-shadow: 0 0 40px rgba(0,191,255,0.2);
+}
+
+.modal-card h2 { 
+  margin: 0 0 24px 0; color: #fff; font-size: 22px; 
+  letter-spacing: 0.5px;
+}
+
+/* INPUTS */
+.form-group { display: flex; flex-direction: column; margin-bottom: 20px; } /* INCREASED GAP */
+.form-group label { 
+  font-size: 12px; color: #94a3b8; margin-bottom: 8px; 
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-group input { 
+  padding: 14px; border-radius: 10px; border: 1px solid #334155; 
+  background: #0f172a; color: #fff; font-size: 14px;
+  transition: 0.2s;
+}
+.form-group input:focus {
+  outline: none; border: 1px solid #00bfff;
+  box-shadow: 0 0 0 3px rgba(0,191,255,0.1);
+}
+
+.form-row { display: flex; gap: 16px; } /* INCREASED GAP */
+.form-row .form-group { flex: 1; }
+
+/* SOCIAL ROW */
+.social-row { 
+  display: grid; grid-template-columns: 120px 120px 1fr 44px; 
+  gap: 10px; margin-bottom: 12px; align-items: center;
+}
+.social-row button { 
+  background: #ef4444; border: none; color: white; 
+  border-radius: 10px; cursor: pointer; height: 44px; font-weight: 700;
+}
+
+.btn-add-social { 
+  background: transparent; border: 1px dashed #38bdf8; color: #38bdf8; 
+  padding: 12px; border-radius: 10px; cursor: pointer; width: 100%;
+  font-weight: 600; transition: 0.2s;
+}
+.btn-add-social:hover { background: rgba(56,189,248,0.1); }
+
+/* BUTTONS */
+.btn-group { display: flex; gap: 12px; margin-top: 28px; } /* INCREASED GAP */
+.btn-save { 
+  flex: 1; padding: 14px; border: none; border-radius: 10px; 
+  background: linear-gradient(90deg, #00bfff, #38bdf8); color: #000; 
+  font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s;
+}
+.btn-save:hover { transform: translateY(-2px); }
+.btn-cancel { 
+  flex: 1; padding: 14px; border: 1px solid #334155; border-radius: 10px; 
+  background: transparent; color: #cbd5e1; font-weight: 600; cursor: pointer;
+}
+.btn-cancel:hover { background: #1e293b; }
