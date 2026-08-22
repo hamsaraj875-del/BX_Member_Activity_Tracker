@@ -37,6 +37,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post('/auth/login', { email, password });
       if (res.data?.success) {
+        if (res.data.token) {
+          localStorage.setItem('bx_token', res.data.token);
+        }
         setUser(res.data.user);
         await checkAuth();
         showToast(`Welcome back, ${res.data.user.name}!`, 'success');
@@ -53,6 +56,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post('/auth/register', userData);
       if (res.data?.success) {
+        if (res.data.token) {
+          localStorage.setItem('bx_token', res.data.token);
+        }
         setUser(res.data.user);
         await checkAuth();
         showToast('Registration successful! Welcome to BX Analytics.', 'success');
@@ -68,12 +74,13 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post('/auth/logout');
+    } catch (err) {
+      // ignore
+    } finally {
+      localStorage.removeItem('bx_token');
       setUser(null);
       setProfile(null);
       showToast('Logged out successfully.', 'info');
-    } catch (err) {
-      setUser(null);
-      setProfile(null);
     }
   };
 

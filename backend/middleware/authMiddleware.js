@@ -2,7 +2,17 @@ import User from '../models/User.js';
 import MemberProfile from '../models/MemberProfile.js';
 
 export const protect = async (req, res, next) => {
-  if (!req.session || !req.session.userId) {
+  let userId = req.session?.userId;
+
+  // Cross-domain fallback: check Authorization header if cookie was blocked
+  if (!userId && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    const token = req.headers.authorization.split(' ')[1];
+    if (token && token !== 'null' && token !== 'undefined') {
+      userId = token;
+    }
+  }
+
+  if (!userId) {
     return res.status(401).json({
       success: false,
       message: 'Not authenticated. Session expired or not logged in. Please login.',
@@ -10,7 +20,7 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    const user = await User.findById(req.session.userId).select('-password');
+    const user = await User.findById(userId).select('-password');
 
     if (!user) {
       req.session.destroy();
