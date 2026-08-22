@@ -8,8 +8,9 @@ import { syncMemberPlatforms } from '../services/platformAggregator.js';
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, department = 'CSE', year = 1, bxRole = 'Member', platforms = [] } = req.body;
+    const cleanEmail = email?.toLowerCase().trim();
 
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: cleanEmail });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }
@@ -19,8 +20,8 @@ export const register = async (req, res, next) => {
     const role = count === 0 ? 'superadmin' : 'member';
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: cleanEmail,
       password,
       role,
       status: 'active',
@@ -84,9 +85,10 @@ export const login = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide both email and password' });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const cleanEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: cleanEmail }).select('+password');
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your email/password.' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials. No account found with this email. Please register first.' });
     }
 
     const isMatch = await user.matchPassword(password);
