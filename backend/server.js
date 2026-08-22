@@ -8,8 +8,13 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import rateLimit from 'express-rate-limit';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Route Imports
 import authRoutes from './routes/authRoutes.js';
@@ -29,6 +34,9 @@ connectDB();
 
 const app = express();
 
+// Trust Render's reverse proxy for secure cookies and rate limiting
+app.set('trust proxy', 1);
+
 // Security Headers
 app.use(helmet({
   crossOriginResourcePolicy: false,
@@ -44,7 +52,16 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    callback(null, true); // Allow during development
+    // Allow requests with no origin (curl, mobile apps, same-origin)
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV === 'development' || !process.env.FRONTEND_URL || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Allow onrender.com domains dynamically
+    if (origin.endsWith('.onrender.com')) {
+      return callback(null, true);
+    }
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -115,6 +132,21 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0',
     mode: process.env.USE_MOCK_DATA === 'true' ? 'mock' : 'live',
     sessionAuth: 'active',
+  });
+});
+
+// Static frontend serving in production (for fullstack deployment)
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendDistPath, 'index.html'), (err) => {
+    if (err) {
+      next();
+    }
   });
 });
 

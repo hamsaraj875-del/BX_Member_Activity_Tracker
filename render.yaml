@@ -1,0 +1,48 @@
+services:
+  # ==========================================
+  # 1. Backend API Web Service
+  # ==========================================
+  - type: web
+    name: bx-analytics-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: USE_MOCK_DATA
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: bx-analytics-frontend
+          property: host
+
+  # ==========================================
+  # 2. Frontend React / Vite Static Site
+  # ==========================================
+  - type: web
+    name: bx-analytics-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: bx-analytics-backend
+          property: host
